@@ -1,41 +1,19 @@
-import openai
 import streamlit as st
-
-openai.api_key = st.secrets["OPENAI_API_KEY"]
-
-def explain_error_with_openai(error_type, error_message):
-    prompt = f"""You are a helpful assistant that explains {error_type} errors in a clear, human-friendly way.
-
-Error message: "{error_message}"
-
-Explain what this error means and how to fix it. Be concise, beginner-friendly, and practical.
-"""
-
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You're an expert Linux and Python error explainer."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3,
-            max_tokens=300,
-        )
-        explanation = response['choices'][0]['message']['content'].strip()
-        return explanation
-    except Exception as e:
-        return f"❌ API Error: {e}"
 from explain_error_with_openai import explain_error_with_openai
 
-# ... your UI logic ...
-error_type = st.selectbox("Select Error Type", ["Linux", "Python"])
-error_message = st.text_area("Paste your error message here:")
+st.set_page_config(page_title="Code Error Storyteller", layout="centered")
 
-if st.button("Explain"):
-    if error_message.strip():
-        with st.spinner("Explaining..."):
-            result = explain_error_with_openai(error_type, error_message)
-        st.markdown("### 📘 Explanation")
-        st.write(result)
+st.title("🐍 Code Error Storyteller")
+st.markdown("Enter a **Python or Linux error message**, and I'll turn it into a fun explanation!")
+
+# User input
+error_input = st.text_area("🔍 Paste your error message here:")
+
+if st.button("🧠 Explain"):
+    if not error_input.strip():
+        st.warning("Please enter an error message.")
     else:
-        st.warning("Please enter a valid error message.")
+        with st.spinner("Asking OpenAI to explain..."):
+            explanation = explain_error_with_openai(error_input)
+            st.success("✅ Here's the explanation:")
+            st.markdown(explanation)
