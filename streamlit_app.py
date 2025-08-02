@@ -1,27 +1,41 @@
 import openai
 import streamlit as st
 
-openai.api_key = st.secrets[""]
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-# Error explanation function
-def explain_error(error_text):
-    prompt = f"Explain this error in simple terms:\n\n{error_text}"
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return response['choices'][0]['message']['content']
+def explain_error_with_openai(error_type, error_message):
+    prompt = f"""You are a helpful assistant that explains {error_type} errors in a clear, human-friendly way.
 
-# Streamlit UI
-st.title("🧠 Code Error Storyteller")
+Error message: "{error_message}"
 
-error_input = st.text_area("Paste your Python or Linux error message here")
+Explain what this error means and how to fix it. Be concise, beginner-friendly, and practical.
+"""
 
-if st.button("Explain Error"):
-    if error_input.strip():
-        with st.spinner("Analyzing and explaining..."):
-            explanation = explain_error(error_input)
-            st.success("Explanation:")
-            st.write(explanation)
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You're an expert Linux and Python error explainer."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3,
+            max_tokens=300,
+        )
+        explanation = response['choices'][0]['message']['content'].strip()
+        return explanation
+    except Exception as e:
+        return f"❌ API Error: {e}"
+from explain_error_with_openai import explain_error_with_openai
+
+# ... your UI logic ...
+error_type = st.selectbox("Select Error Type", ["Linux", "Python"])
+error_message = st.text_area("Paste your error message here:")
+
+if st.button("Explain"):
+    if error_message.strip():
+        with st.spinner("Explaining..."):
+            result = explain_error_with_openai(error_type, error_message)
+        st.markdown("### 📘 Explanation")
+        st.write(result)
     else:
-        st.warning("Please paste an error message to explain.")
+        st.warning("Please enter a valid error message.")
